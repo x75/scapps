@@ -8,6 +8,11 @@
 // f.sampleRate;
 // f.dump;
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 (
 ~sflist = File.new("/home/src/supercollider/scapps/fm_atonal16/sounds_wasps.txt", "r");
 
@@ -57,27 +62,48 @@ p = Synth(\help_PlayBuf, [\out, 0, \bufnum, ~sfs_bufs.choose, \amp, 0.5]);
 ~t1_wasps_dur = Prand([0.1, 0.2, 0.3, 0.4, 1.0, 2.0, 0.05, 0.05], inf).asStream; 
 ~t1_wasps_pit = Prand((0.125 ! 4) ++ (0.25 ! 4) ++ (0.5 ! 4) ++ (1.0 ! 4) ++ [2.0], inf).asStream; 
 
+~t1_wasps_dur = Pgauss(0.1, 0.01, inf).asStream;
+~t1_wasps_pit = Pgauss(Pfunc({|i| (sin(i / 100.0 * 2 * pi) / 2.0 + 0.5) * 0.01 + 0.25}), 0.01, inf).asStream;
 
+~t1_wasps_pit = Pgauss(Pfunc({|i| (sin(i / 100.0 * 2 * pi) / 2.0 + 0.5) * 0.01 + 0.125}), 0.01, inf).asStream;
+
+(
 ~t1_wasps = Task({
 	var dur;
 	var pit;
 	inf.do({|i|
 		dur = ~t1_wasps_dur.next;
-		pit = ~t1_wasps_pit.next;
+		pit = ~t1_wasps_pit.next(i);
 		b = ~sfs_bufs.choose;
 		["playing buffer", b, "dur", dur, "pit", pit].postln;
 		p = Synth(\help_PlayBuf, [\out, 0, \bufnum, ~sfs_bufs.choose, \amp, 0.5,
-			\pitch, pit, \dur, dur]);
+			\pitch, pit, \dur, dur * 0.6]);
 		q = Synth(\help_PlayBuf, [\out, 0, \bufnum, ~sfs_bufs.choose, \amp, 0.5,
-			\pitch, pit + rand(-0.1, 0.1), \dur, dur]);
+			\pitch, pit + rand(-0.1, 0.1), \dur, dur * 0.6]);
 		dur.wait;
 			
 	});
 });
 ~t1_wasps.start;
-
+)
 ~t1_wasps
 
 ~t1_wasps.stop;
 
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// test loading maximum number of buffers
+a = Array.new(1024);
+1000.do({|i|
+	["loading", i].postln;
+	a = a.add(Buffer.read(s, "/home/lib/audio/sounds/ambi/wasps_wall_STE-011_noise_removed_cut/wasps_wall_STE-011_noise_removed_229.196.wav"));
+	[a[i].bufnum].postln;
+});
+
+a.do({|buf|
+	buf.free;
+});
+
+s.freeAll
