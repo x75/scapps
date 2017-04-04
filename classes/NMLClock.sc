@@ -19,7 +19,7 @@ FollowerClock : Clock {
 		scheduler = Scheduler.new(this, drift:false, recursive:false);
 		tickOSCFunc = OSCFunc({|msg, time, addr|
 			var beatDelta, currentTempo;
-			[msg, time, addr].postln;
+			// [msg, time, addr].postln;
 			if(msg[2] == 1, {
 				currentTempo1 = msg[3];
 			}, {
