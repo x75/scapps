@@ -4,6 +4,14 @@
 s.boot;
 thisProcess.openUDPPort(1138); // open another custom listening port
 thisProcess.openPorts;
+
+// osc setup
+NetAddr.broadcastFlag = true;
+~oscbroadcast = NetAddr("192.168.0.255", 1138);
+
+~oscbroadcast.sendMsg("/blub", 100.rand);
+~oscnamelocal = "theta";
+~oscnameremote = ["vrt", "hiaz"];
 )
 
 (
@@ -21,18 +29,13 @@ thisProcess.openPorts;
 ~numcbus.do({|i| ~cbusses = ~cbusses.add(Bus.control());});
 
 // remote control busses
+// ~cbussesr = Dictionary.new;
 ~cbussesr = [];
 (2*~numcbus).do({|i| ~cbussesr = ~cbussesr.add(Bus.control());});
 
 s.options.numOutputBusChannels;
 s.options.numInputBusChannels;
 
-// osc setup
-NetAddr.broadcastFlag = true;
-~oscbroadcast = NetAddr("192.168.0.255", 1138);
-
-~oscbroadcast.sendMsg("/blub", 100.rand);
-~oscname = "theta";
 )
 
 // synth definitions
@@ -54,7 +57,7 @@ this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
 ~bus2osctask = Task({
 	inf.do({|i|
 		~cbusses.do({|b, j|
-			~oscbroadcast.sendMsg("/" ++ ~oscname ++ "/c" ++ j, b.getSynchronous);
+			~oscbroadcast.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
 		});
 		0.1.wait;
 	});
@@ -93,6 +96,8 @@ l = p.getLine;
 
 ~nodeidsdict = ();
 ~nodeidsdict.dump
+
+~abusses
 
 // workspace ..
 // osc to in bus
