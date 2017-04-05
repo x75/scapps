@@ -5,7 +5,7 @@
 // mostly for demonstration purposes
 // these assume you have a shared timebase, e.g. via NTP
 
-FollowerClock : Clock {
+FollowerClock : TempoClock {
 	var masterAddr, oscPath, scheduler, tickOSCFunc, <tempo = 1;
 	var <beatsPerBar=4.0, barsPerBeat=0.25;
 	var <baseBarBeat=0.0, <baseBar=0.0;
@@ -22,9 +22,11 @@ FollowerClock : Clock {
 			// [msg, time, addr].postln;
 			if(msg[2] == 1, {
 				currentTempo1 = msg[3];
+				//tempo = currentTempo1/60.0;
 			}, {
+				// beatDelta = secs2beats(msg[3]);
 				beatDelta = msg[3];
-				SystemClock.schedAbs(time, {tempo = currentTempo1; this.tick(beatDelta)});
+				SystemClock.schedAbs(time, {tempo = currentTempo1/60.0; this.tick(beatDelta)});
 			});
 			// beatDelta = msg[1];
 			// currentTempo = msg[2];
@@ -37,9 +39,9 @@ FollowerClock : Clock {
 		scheduler.clear;
 	}
 
-	secs2beats {|secs| ^secs }
+	secs2beats {|secs| ^(tempo/secs) }
 
-	beats2secs {|beats| ^beats }
+	beats2secs {|beats| ^beats/tempo }
 
 	sched { arg delta, item;
 		scheduler.sched(delta, item);
