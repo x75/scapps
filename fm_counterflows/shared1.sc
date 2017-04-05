@@ -4,11 +4,20 @@ s.boot;
 
 //////////////////////////////
 // busses
-~abusses = [];
-10.do({|i| ~abusses = ~abusses.add(Bus.audio());});
+~numabus = 10
+~numcbus = 10
 
+// local audio busses
+~abusses = [];
+~numabus.do({|i| ~abusses = ~abusses.add(Bus.audio());});
+
+// local control busses
 ~cbusses = [];
-10.do({|i| ~cbusses = ~cbusses.add(Bus.control());});
+~numcbus.do({|i| ~cbusses = ~cbusses.add(Bus.control());});
+
+// remote control busses
+~cbussesr = [];
+(2*~numcbus).do({|i| ~cbussesr = ~cbussesr.add(Bus.control());});
 
 s.options.numOutputBusChannels;
 s.options.numInputBusChannels;
@@ -59,16 +68,17 @@ SynthDef(\fm1, {
 }).send(s);
 )
 
+(
 // create mixer synth
 ~fmmixer = Synth(\fmmixer, [ \out, 0]);
 
-// init control busses
-(
+// init local control busses
 ~cbusses.do({|b, i|
 	// b.value = 100.0 + (i * 100); // 100.rrand(400.0);
 	b.value = 100.rrand(400.0);
 });
 
+// init local control bus 2 osc
 ~bus2osctask = Task({
 	inf.do({|i|
 		~cbusses.do({|b, j|
@@ -76,6 +86,13 @@ SynthDef(\fm1, {
 		});
 		0.1.wait;
 	});
+});
+
+// init remote control bus from osc
+(2*~numcbus).do({|i|
+	OSCdef(\cr ++ i, {|msg, time, addr, recvPort|
+		~cbussesr[i].value = msg[1];
+	}, "/nik/c" ++ i);
 });
 
 )
