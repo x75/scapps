@@ -1,11 +1,16 @@
 
-
+(
+// basic init
 s.boot;
+thisProcess.openUDPPort(1138); // open another custom listening port
+thisProcess.openPorts;
+)
 
+(
 //////////////////////////////
 // busses
-~numabus = 10
-~numcbus = 10
+~numabus = 10;
+~numcbus = 10;
 
 // local audio busses
 ~abusses = [];
@@ -23,49 +28,16 @@ s.options.numOutputBusChannels;
 s.options.numInputBusChannels;
 
 // osc setup
-NetAddr.broadcastFlag = true
+NetAddr.broadcastFlag = true;
 ~oscbroadcast = NetAddr("192.168.0.255", 1138);
 
 ~oscbroadcast.sendMsg("/blub", 100.rand);
 ~oscname = "theta";
+)
 
 // synth definitions
 (
-// main output mixer
-~makeSynthDef = {
-	arg name, busnum = 10;
-	SynthDef(name, {
-		arg out = 0, amp = 1.0;
-		var busmix;
-		busmix = Mix.fill(busnum,
-			{|i| Pan2.ar(In.ar(4+i), -1 + (i*(2/busnum)))})
-		* busnum.reciprocal;
-
-		// amp_env = EnvGen.ar(Env.asr(0.005,1,0.005,[2,-2]), gate: gate,
-		// doneAction: 2);
-		// mixsig = Mix.fill(sines,
-		// {SinOsc.ar((pitch+(Rand(0.0,1.0).pow(1.5)*24)).midicps)})
-		// * sines.reciprocal;
-		// sig = mixsig * amp_env * amp;
-
-		Out.ar(out,busmix);
-	})
-};
-~makeSynthDef.value(\fmmixer,10).send;
-
-// generator defs
-SynthDef(\fm1, {
-	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cellinval = In.kr(cellin);
-	var s1 = SinOsc.ar(Lag.kr(cellinval + LFNoise2.kr(10, mul: 20, add: 0), 0.1));
-	var f1 = Pitch.kr(s1);
-	// var f1 = ZeroCrossing.ar(s1);
-	// var f1 = WhiteNoise.kr();
-	// Poll.kr(Impulse.kr(2.0), f1, label: \u ++ NodeID.ir.poll);
-	Out.kr(cellout, f1);
-	Out.ar(out, s1);
-	// SinOsc.ar({134.0.rand2(137.0)} ! 4, Lag.kr(Pitch.kr(~out.ar(4).reverse) * 0.1 * LFNoise2.kr(0.5, 4pi * 0.9), 0.1), 0.3) }
-}).send(s);
+this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
 )
 
 (
@@ -91,36 +63,43 @@ SynthDef(\fm1, {
 // init remote control bus from osc
 (2*~numcbus).do({|i|
 	OSCdef(\cr ++ i, {|msg, time, addr, recvPort|
+		msg.postln;
 		~cbussesr[i].value = msg[1];
-	}, "/nik/c" ++ i);
+	}, "/vrt/c" ++ i, recvPort: 1138);
 });
-
 )
+
+// application specific code -> your ressonsibility
 
 // test scenario, create generators synths
 (
 ~nodeids = [];
-~abusses.do({|b, i|
+~abusses .do({|b, i|
 	// Synth(\fm1, [\in, 0, \out, b, \amp, 1.0, \cellin, ~cbusses.wrapAt(i-1), \cellout, ~cbusses[i]]);
 	~nodeids = ~nodeids.add(s.nextNodeID);
 	["nodeid", ~nodeids[i]].postln;
 	s.sendMsg("/s_new", "fm1", ~nodeids[i], 0, 1, "in", 0, "out", b.index, "amp", 1.0,
-		"cellin", ~cbusses.wrapAt(i-1).index, "cellout", ~cbusses[i].index);
+		"cellin", ~cbussesr.wrapAt(i-1).index, "cellout", ~cbusses[i].index);
 });
 
 ~bus2osctask.start;
-
 )
+
+p = Pipe.new("pwd", "r");            // list directory contents in long format
+l = p.getLine;
 
 ~nodeids
 ~bus2osctask.stop;
 
+~nodeidsdict = ();
+~nodeidsdict.dump
+
+// workspace ..
+// osc to in bus
 ~blub = ~cbusses[0].getSynchronous
 
 ~blub.value
 
-// workspace ..
-// osc to in bus
 b = Bus.control(s);
 b.value = 100.rrand(400.0);
 
