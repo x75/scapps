@@ -15,7 +15,7 @@ thisProcess.openPorts;
 
 // network setup / osc foo
 NetAddr.broadcastFlag = true;
-~oscbroadcast = NetAddr("192.168.0.104", 1138);
+~oscbroadcast = NetAddr("192.168.0.255", 1138);
 )
 
 (
