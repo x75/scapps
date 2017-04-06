@@ -3,7 +3,7 @@
 // load configuration from shared_local.sc first
 // copy shared_template.sc to shared_local.sc and adjust your settings
 
-~counterpath=("../src/supercollider/scapps/fm_counterflows/")
+~counterpath=("../src/supercollider/scapps/fm_counterflows/");
 this.executeFile(~counterpath +/+ "shared_local.sc");
 )
 
