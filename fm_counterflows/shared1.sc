@@ -2,7 +2,9 @@
 (
 // load configuration from shared_local.sc first
 // copy shared_template.sc to shared_local.sc and adjust your settings
-this.executeFile("../src/supercollider/scapps/fm_counterflows/shared_local.sc");
+
+~counterpath=("../src/supercollider/scapps/fm_counterflows/")
+this.executeFile(~counterpath +/+ "shared_local.sc");
 )
 
 (
@@ -43,9 +45,9 @@ NetAddr.broadcastFlag = true;
 // load synth definitions from separate files
 (
 // shared synths (mixer, reference)
-this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
+this.executeFile(~counterpath +/+ "fmsynthdefs.sc");
 // local definitions
-this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
+this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 )
 
 (
