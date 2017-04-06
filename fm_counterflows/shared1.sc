@@ -1,16 +1,18 @@
 
 ( // configure this first
 // set these names to your local name and remotes into remote
-~oscnamelocal = "theta";
+~oscnamelocal  = "theta";
+~oscnamelocals = "theta".asSymbol;
 ~oscnameremote = (
-	"vrt": 10,
-	"hiaz": 10);
+	(~oscnamelocal.asSymbol): 10,
+	'vrt': 10,
+	'hiaz': 10);
+// your local saynth defs
+~synthdefs = ["fm1", "chaosfb1", "chaosfb2"];
 // set busses
 ~numabus = 10;
 ~numcbus = 10;
 )
-
-s.gui
 
 (
 // basic init
@@ -32,18 +34,24 @@ NetAddr.broadcastFlag = true;
 ~abusses = [];
 ~numabus.do({|i| ~abusses = ~abusses.add(Bus.audio());});
 
-// local control busses
-~cbusses = [];
-~numcbus.do({|i|
-	~cbusses = ~cbusses.add(Bus.control());
-	~cbusses[~cbusses.size-1].value = 100.rrand(4000.0);
-});
+// // local control busses
+// ~cbusses = [];
+// ~numcbus.do({|i|
+// 	~cbusses = ~cbusses.add(Bus.control());
+// 	~cbusses[~cbusses.size-1].value = 100.rrand(4000.0);
+// });
 
 // remote control busses
 ~cbussesr = Dictionary.new;
 ~oscnameremote.keys.do({|name, i|
 	var tmp = [];
-	(~oscnameremote[name]).do({|i| tmp = tmp.add(Bus.control());});
+	(~oscnameremote[name]).do({|i|
+		tmp = tmp.add(Bus.control());
+		// init bus values
+		// if(name == ~oscnamelocal, {
+		tmp[tmp.size-1].value = -1.0.rrand(1.0);
+		//});
+	});
 	~cbussesr.add(name -> tmp);
 });
 
@@ -52,10 +60,12 @@ s.options.numInputBusChannels;
 
 )
 
-// synth definitions
+// load synth definitions from separate files
 (
-
+// shared synths (mixer, reference)
 this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
+// local definitions
+this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 )
 
 (
@@ -65,42 +75,43 @@ this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
 // init local control bus 2 osc
 ~bus2osctask = Task({
 	inf.do({|i|
-		~cbusses.do({|b, j|
+		~cbussesr[~oscnamelocal].do({|b, j|
 			~oscbroadcast.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
 		});
 		0.1.wait;
 	});
 });
 
+OSCdef.all.size;
+// OSCdef.freeAll;
+
 // init remote control bus from osc
 ~oscnameremote.keys.do({|name, i|
 	(~oscnameremote[name]).do({|j|
-		OSCdef(\cr ++ j, {|msg, time, addr, recvPort|
+		OSCdef((name ++ "cr" ++ j).asSymbol, {|msg, time, addr, recvPort|
 			//msg.postln;
 			// linear assignment
 			~cbussesr[name][j].value = msg[1];
 			// random assignment
 			// ~cbussesr[~cbussesr.keys.choose][~numcbus.rand].value = msg[1];
-		}, "/vrt/c" ++ i, recvPort: 1138);
+		}, "/" ++ name ++ "/c" ++ j, recvPort: 1138);
 	});
 });
 )
 
-~cbussesr[~cbussesr.keys.choose][~numcbus.rand].value = 1
-
-// application specific code -> your ressonsibility
+// application specific code -> your turn
 
 // test scenario, create generators synths
 (
-~synthdefs = ["fm1", "chaosfb1", "chaosfb2"];
 ~nodeids = [];
 ~abusses.do({|b, i|
 	// Synth(\fm1, [\in, 0, \out, b, \amp, 1.0, \cellin, ~cbusses.wrapAt(i-1), \cellout, ~cbusses[i]]);
 	~nodeids = ~nodeids.add(s.nextNodeID);
 	["nodeid", ~nodeids[i]].postln;
 	s.sendMsg("/s_new", ~synthdefs.choose, ~nodeids[i], 0, 1, "in", 0, "out", b.index, "amp", 1.0,
-//		"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
-		"cellin", ~cbusses.wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
+	"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
+	// local only hack
+	// "cellin", ~cbusses.wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
 });
 
 ~bus2osctask.start;
@@ -113,6 +124,11 @@ this.executeFile("../src/supercollider/scapps/fm_counterflows/fmsynthdefs.sc");
 ~bus2osctask.stop;
 )
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+// workspace ..
+
+
+// get current working directory of sclang process
 p = Pipe.new("pwd", "r");            // list directory contents in long format
 l = p.getLine;
 
@@ -128,7 +144,6 @@ p = nil
 
 ~abusses
 
-// workspace ..
 // osc to in bus
 ~blub = ~cbusses[0].getSynchronous
 
