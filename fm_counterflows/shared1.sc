@@ -3,7 +3,7 @@
 // load configuration from shared_local.sc first
 // copy shared_template.sc to shared_local.sc and adjust your settings
 
-~counterpath=("../src/supercollider/scapps/fm_counterflows/")
+~counterpath=("../src/supercollider/scapps/fm_counterflows/");
 this.executeFile(~counterpath +/+ "shared_local.sc");
 )
 
@@ -15,7 +15,7 @@ thisProcess.openPorts;
 
 // network setup / osc foo
 NetAddr.broadcastFlag = true;
-~oscbroadcast = NetAddr("192.168.0.255", 1138);
+~oscbroadcast = NetAddr("192.168.0.104", 1138);
 )
 
 (
@@ -57,14 +57,15 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 // init local control bus 2 osc
 ~bus2osctask = Task({
 	inf.do({|i|
-		~cbussesr[~oscnamelocal].do({|b, j|
+		~cbussesr[~oscnamelocals].do({|b, j|
 			~oscbroadcast.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
 		});
 		0.1.wait;
 	});
 });
 
-OSCdef.all.size;
+// ~bus2osctask.play;
+// OSCdef.all.size;
 // OSCdef.freeAll;
 
 // init remote control bus from osc
