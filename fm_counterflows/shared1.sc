@@ -1,31 +1,19 @@
 
-( // configure this first
-// set these names to your local name and remotes into remote
-~oscnamelocal  = "theta";
-~oscnamelocals = "theta".asSymbol;
-~oscnameremote = (
-	(~oscnamelocal.asSymbol): 10,
-	'vrt': 10,
-	'hiaz': 10);
-// your local saynth defs
-~synthdefs = ["fm1", "chaosfb1", "chaosfb2"];
-// set busses
-~numabus = 10;
-~numcbus = 10;
+(
+// load configuration from shared_local.sc first
+// copy shared_template.sc to shared_local.sc and adjust your settings
+this.executeFile("../src/supercollider/scapps/fm_counterflows/shared_local.sc");
 )
 
 (
-// basic init
+// basic init for server and network
 s.boot;
 thisProcess.openUDPPort(1138); // open another custom listening port
 thisProcess.openPorts;
 
-// network setup
-// osc foo
+// network setup / osc foo
 NetAddr.broadcastFlag = true;
 ~oscbroadcast = NetAddr("192.168.0.255", 1138);
-
-//~oscbroadcast.sendMsg("/blub", 100.rand);
 )
 
 (
@@ -33,13 +21,6 @@ NetAddr.broadcastFlag = true;
 // local audio busses
 ~abusses = [];
 ~numabus.do({|i| ~abusses = ~abusses.add(Bus.audio());});
-
-// // local control busses
-// ~cbusses = [];
-// ~numcbus.do({|i|
-// 	~cbusses = ~cbusses.add(Bus.control());
-// 	~cbusses[~cbusses.size-1].value = 100.rrand(4000.0);
-// });
 
 // remote control busses
 ~cbussesr = Dictionary.new;
@@ -55,9 +36,8 @@ NetAddr.broadcastFlag = true;
 	~cbussesr.add(name -> tmp);
 });
 
-s.options.numOutputBusChannels;
-s.options.numInputBusChannels;
-
+// s.options.numOutputBusChannels;
+// s.options.numInputBusChannels;
 )
 
 // load synth definitions from separate files
