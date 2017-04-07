@@ -67,14 +67,23 @@ SynthDef(\kik, { |preamp = 1, amp = 1, dur = 0.1, envdur = 0.1, p1 = 200, p2 = 4
 
 )
 
+(
+100.do({|i|
+	i.postln;
+	Synth(\hihat, [\amp, 0.01.exprand(0.2)]);
+});
+)
+
 x = Synth(\hihat, [\amp, 1.0]);
 x = Synth(\hihat, [\amp, 0.4]);
 x = Synth(\hihat, [\amp, 0.1]);
 x = Synth(\hihat, [\amp, 0.3, \div, 8.0]);
 
 y = Synth(\snare, [\amp, 0.8, \div, 1.0]);
+y = Synth(\snare, [\amp, 0.6, \div, 0.5]);
 
 z = Synth(\kik, [\amp, 2.0, \div, 1.0, \p1, 320]);
+z = Synth(\kik, [\amp, 2.0, \div, 1/16, \p1, 240, \envdur, 2.0]);
 
 
 Array.series(10, 0)

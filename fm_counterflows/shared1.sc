@@ -91,7 +91,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 	// Synth(\fm1, [\in, 0, \out, b, \amp, 1.0, \cellin, ~cbusses.wrapAt(i-1), \cellout, ~cbusses[i]]);
 	~nodeids = ~nodeids.add(s.nextNodeID);
 	["nodeid", ~nodeids[i]].postln;
-	s.sendMsg("/s_new", ~synthdefs.choose, ~nodeids[i], 0, 1, "in", 0, "out", b.index, "amp", 1.0,
+	s.sendMsg("/s_new", ~synthdefs.choose, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 1.0,
 	"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
 	// local only hack
 	// "cellin", ~cbusses.wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
@@ -107,6 +107,29 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 ~bus2osctask.stop;
 )
 
+// experiment
+(
+~eq = Task({
+	var nodeid, cursynth, curainbus;
+	100.do({|iter|
+		~abusses.do({|b, i|
+			nodeid = ~nodeids[i];
+			cursynth = ~synthdefs.choose;
+			curainbus = ~abusses.choose.index;
+			["new", nodeid, cursynth, curainbus].postln;
+			s.sendMsg("/n_free", nodeid);
+			0.1.wait;
+			s.sendMsg("/s_new", cursynth, nodeid, 0, 1, "in", curainbus, "out", b.index, "amp", 1.0,
+			"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
+			1.0.exprand(10.0).wait;
+		});
+	});
+});
+~eq.start;
+)
+
+
+~eq.stop;
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // workspace ..
 
