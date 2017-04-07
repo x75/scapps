@@ -4,8 +4,13 @@
 SynthDef(\chaosfb1, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
 	var cin = In.kr(cellin);
-	var sig = SinOsc.ar(freq: [220.0, 360.0],               phase: LocalIn.ar(2).reverse * LFNoise2.kr(freq: 0.5, mul: 0.3 * 4pi), mul: amp); // 0.3
+	var freq = {ExpRand(180.0, 400.0)} ! 2;
+	var sig = SinOsc.ar(
+		freq: freq, // [220.0, 360.0],
+		phase: LocalIn.ar(2).reverse * LFNoise2.kr(freq: 0.5, mul: 0.3 * 4pi),
+		mul: amp); // 0.3
 	LocalOut.ar(sig);
+	freq.poll;
 	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	~f_cout_pitch.value(cellout, sig);
 	Out.ar(out, sig);
@@ -15,7 +20,11 @@ SynthDef(\chaosfb1, {
 SynthDef(\chaosfb2, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
 	var cin = In.kr(cellin);
-	var sig = SinOsc.ar(freq: [60, 60.7] * cin.abs ,               phase: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 0.145 * 4pi), mul: amp);// 0.14
+	var freq = {ExpRand(40.0, 100.0)} ! 2;
+	var sig = SinOsc.ar(
+		freq: freq * cin.abs, // [60, 60.7] * cin.abs,
+		phase: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 0.145 * 4pi),
+		mul: amp);// 0.14
 	LocalOut.ar(sig);
 	Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	Out.ar(out, sig);
