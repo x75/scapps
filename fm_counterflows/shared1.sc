@@ -115,7 +115,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 		~abusses.do({|b, i|
 			nodeid = ~nodeids[i];
 			cursynth = ~synthdefs.choose;
-			curainbus = ~abusses.choose.index;
+			curainbus = i + 1; //~abusses.choose.index;
 			["new", nodeid, cursynth, curainbus].postln;
 			s.sendMsg("/n_free", nodeid);
 			0.1.wait;
@@ -127,7 +127,6 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 });
 ~eq.start;
 )
-
 
 ~eq.stop;
 ///////////////////////////////////////////////////////////////////////////////////////////////
