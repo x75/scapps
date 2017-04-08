@@ -3,14 +3,15 @@
 // original version from jitlib examples
 SynthDef(\chaosfb1, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var freq = {ExpRand(180.0, 400.0)} ! 2;
-	var sig = SinOsc.ar(
+	var cin, freq, sig;
+	cin = ~f_get_cin.value(cellin);
+	freq = {ExpRand(180.0, 400.0)} ! 2;
+	sig = SinOsc.ar(
 		freq: freq, // [220.0, 360.0],
 		phase: LocalIn.ar(2).reverse * LFNoise2.kr(freq: 0.5, mul: 0.3 * 4pi),
 		mul: amp); // 0.3
 	LocalOut.ar(sig);
-	freq.poll;
+	// freq.poll;
 	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	~f_cout_pitch.value(cellout, sig);
 	Out.ar(out, sig);
@@ -19,9 +20,11 @@ SynthDef(\chaosfb1, {
 // olly's synth
 SynthDef(\chaosfb2, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var freq = {ExpRand(40.0, 100.0)} ! 2;
-	var sig = SinOsc.ar(
+	// var cin = In.kr(cellin);
+	var cin, freq, sig;
+	cin = ~f_get_cin.value(cellin);
+	freq = {ExpRand(40.0, 100.0)} ! 2;
+	sig = SinOsc.ar(
 		freq: freq * cin.abs, // [60, 60.7] * cin.abs,
 		phase: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 0.145 * 4pi),
 		mul: amp);// 0.14
@@ -29,36 +32,51 @@ SynthDef(\chaosfb2, {
 	Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	Out.ar(out, sig);
 }).send(s);
+
+// owald's synth
 SynthDef(\chaosfb3, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var sig = SinOsc.ar(freq: Pitch.kr(LocalIn.ar(2)),     phase: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 0.2 * 4pi), mul: amp); // 0.2
+	var cin, sig;
+	cin = ~f_get_cin.value(cellin);
+	sig = SinOsc.ar(freq: Pitch.kr(LocalIn.ar(2)),     phase: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 0.2 * 4pi), mul: amp); // 0.2
 	LocalOut.ar(sig);
 	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	~f_cout_pitch.value(cellout, sig);
 	Out.ar(out, sig);
 }).send(s);
+
 SynthDef(\chaosfb4, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var sig = SinOscFB.ar(freq: Pitch.kr(LocalIn.ar(2)),   feedback: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 4pi), mul: amp * cin.abs);
+	var cin, sig;
+	cin = ~f_get_cin.value(cellin);
+	sig = SinOscFB.ar(
+		freq: Pitch.kr(LocalIn.ar(2)),
+		feedback: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 4pi),
+		mul: amp * cin.abs);
 	LocalOut.ar(sig);
 	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	~f_cout_pitch.value(cellout, sig);
 	Out.ar(out, sig);
 }).send(s);
+
 SynthDef(\chaosfb5, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var sig = SinOsc.ar(freq: {100.0.rand2(300.0)} ! 4, phase: LocalIn.ar(4).distort.reverse.tanh * LFNoise2.kr(0.5, 4pi * 0.8), mul: 0.2);
+	var cin, sig;
+	cin = ~f_get_cin.value(cellin);
+	sig = SinOsc.ar(
+		freq: {100.0.rand2(300.0)} ! 4,
+		phase: LocalIn.ar(4).distort.reverse.tanh * LFNoise2.kr(0.5, 4pi * 0.8),
+		mul: 0.2);
 	LocalOut.ar(sig);
 	Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	Out.ar(out, sig);
 }).send(s);
+
 SynthDef(\chaosfb6, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin = In.kr(cellin);
-	var sig = SinOsc.ar(freq:{134.0.rand2(137.0)} ! 4,  phase: Lag.kr(Pitch.kr(LocalIn.ar(4).reverse) * 0.1 * LFNoise2.kr(0.5, 4pi * 0.9), 0.1), mul: 0.3);
+	var cin, sig;
+	cin = ~f_get_cin.value(cellin);
+	sig = SinOsc.ar(freq:{134.0.rand2(137.0)} ! 4,  phase: Lag.kr(Pitch.kr(LocalIn.ar(4).reverse) * 0.1 * LFNoise2.kr(0.5, 4pi * 0.9), 0.1), mul: 0.3);
 	LocalOut.ar(sig);
 	Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	Out.ar(out, sig);
@@ -67,7 +85,7 @@ SynthDef(\chaosfb6, {
 
 SynthDef(\specen, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var ein, fft, entropy;
+	var ein, fft, entropy = 0;
 
 	var cin, sig, entf;
 
@@ -76,10 +94,11 @@ SynthDef(\specen, {
 	// ein = SoundIn.ar;
 	// ein = ein;// * LFPulse.ar(freq: 0.5);
 	// ein = ein + (LocalIn.ar(2).reverse * 0.1);
+
 	ein = In.ar(in) + WhiteNoise.ar(mul: 1e-6);
 	fft = FFT(LocalBuf(4096), ein);
 
-	entropy = SpectralEntropy.kr(fft,4096,2);    //one output band (so full spectrum's entropy)
+	entropy = SpectralEntropy.kr(fft,4096,2) - entropy;    //one output band (so full spectrum's entropy)
 
 	cin = In.kr(cellin);
 	// LFNoise2.kr(0.5, 4pi)
@@ -100,7 +119,7 @@ SynthDef(\specen, {
 
 SynthDef(\sensdiss, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var ein, fft, entropy;
+	var ein, fft, entropy = 0, tmpent = 0;
 
 	var cin, sig, entf;
 
@@ -112,12 +131,15 @@ SynthDef(\sensdiss, {
 	ein = In.ar(in) + WhiteNoise.ar(mul: 1e-6);
 	fft = FFT(LocalBuf(8192), ein);
 
-	entropy = SensoryDissonance.kr(fft: fft, maxpeaks: 100, peakthreshold: 0.001, norm: 10.0);    //one output band (so full spectrum's entropy)
+	entropy = SensoryDissonance.kr(fft: fft, maxpeaks: 100, peakthreshold: 0.001, norm: 10.0);
+	// entropy = tempent;
 
 	cin = In.kr(cellin);
 	// LFNoise2.kr(0.5, 4pi)
-	entf = Lag.kr(entropy, lagTime: ExpRand(1.0, 10.0));// * LFNoise2.kr(freq: 0.1, mul: 1.0);
-	sig = SinOsc.ar(freq: [ExpRand(40.0, 100.0), ExpRand(40.0, 100.0)] * entf * 1.0 + 40,               phase: LocalIn.ar(2).reverse * entf * 1.0, mul: 0.3);
+	entf = entropy - Lag.kr(entropy, lagTime: ExpRand(1.0, 10.0));// * LFNoise2.kr(freq: 0.1, mul: 1.0);
+	sig = SinOscFB.ar(
+		freq: [ExpRand(40.0, 100.0), ExpRand(40.0, 100.0)] * entf * 1.0 + 40,
+		feedback: LocalIn.ar(2).reverse * entf * 1.0, mul: 0.3);
 	// sig = SMS.ar(ein, 80, MouseY.kr(1,50), 8, 0.3);
 	// + WhiteNoise.kr(mul: 0.05)
 	Poll.kr(Impulse.kr(1/4.0), entf, \sensdiss);
