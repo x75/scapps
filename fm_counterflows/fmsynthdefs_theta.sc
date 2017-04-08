@@ -1,20 +1,32 @@
 // some funcs
 
 // original version from jitlib examples
-SynthDef(\chaosfb1, {
-	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-	var cin, freq, sig;
-	cin = ~f_get_cin.value(cellin);
-	freq = {ExpRand(180.0, 400.0)} ! 2;
-	sig = SinOsc.ar(
+// SynthDef(\chaosfb1, {
+// 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
+// 	var cin, freq, sig;
+// 	cin = ~f_get_cin.value(cellin);
+// 	freq = {ExpRand(180.0, 400.0)} ! 2;
+// 	sig = SinOsc.ar(
+// 		freq: freq, // [220.0, 360.0],
+// 		phase: LocalIn.ar(2).reverse * LFNoise2.kr(freq: 0.5, mul: 0.3 * 4pi),
+// 	mul: amp); // 0.3
+// 	LocalOut.ar(sig);
+// 	// freq.poll;
+// 	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
+// 	~f_cout_pitch.value(cellout, sig);
+// 	Out.ar(out, sig);
+// }).send(s);
+
+~makeSynthDefWrapper.value(\chaosfb1, {
+	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0, cin = 0, freq = 0|
+	var sout, cout;
+	sout = SinOsc.ar(
 		freq: freq, // [220.0, 360.0],
 		phase: LocalIn.ar(2).reverse * LFNoise2.kr(freq: 0.5, mul: 0.3 * 4pi),
-		mul: amp); // 0.3
-	LocalOut.ar(sig);
-	// freq.poll;
-	// Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
-	~f_cout_pitch.value(cellout, sig);
-	Out.ar(out, sig);
+	mul: amp); // 0.3
+	LocalOut.ar(sout);
+	cout = ~f_cout_pitch_raw.value(cellout, sout); // sends it
+	[sout, cout]
 }).send(s);
 
 // olly's synth
@@ -81,7 +93,24 @@ SynthDef(\chaosfb6, {
 	Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
 	Out.ar(out, sig);
 }).send(s);
-//
+
+// owald's synth func version
+~makeSynthDefWrapper.value(\chaosfb7, {
+	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0, cin = 0, freq = 0|
+	var sout, cout;
+	amp = 1.0 - ExpRand(lo: 0.2, hi: 0.8);
+	sout = SinOscFB.ar(
+		freq: Pitch.kr(LocalIn.ar(2)) * LFNoise0.ar(ExpRand(lo: 0.01, hi: 2.0), mul: 1e-3, add: 1.0),
+		feedback: LocalIn.ar(2).reverse * LFNoise2.ar(0.5, 0.2 * 4pi),
+		mul: amp); // 0.2
+	LocalOut.ar(sout);
+	// Out.kr(cellout, (Pitch.kr(sout)/SampleRate.ir/2) - 1);
+	cout = ~f_cout_pitch_raw.value(cellout, sout);
+	[sout, cout]
+}).send(s);
+
+
+// analysis stuff
 
 SynthDef(\specen, {
 	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|

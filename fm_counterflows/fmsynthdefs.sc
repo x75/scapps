@@ -33,6 +33,11 @@
 	Out.kr(cellout, (Pitch.kr(sig)/(SampleRate.ir/2)) - 1);
 };
 
+~f_cout_pitch_raw = {
+	|cellout, sig|
+	(Pitch.kr(sig)/(SampleRate.ir/2)) - 1;
+};
+
 ~f_get_cin = {
 	|cellin = 0|
 	var wrap, cin;
@@ -41,58 +46,42 @@
 	cin
 };
 
-// // synthdef wrapper
-// ~makeSynthDefWrapper = {
-// 	|name = \bla, synthfunc = nil|
-// 	SynthDef(name, {
-// 		|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0|
-// 		var cin, freq, sig;
-// 		var fargs, myf;
-// 		cin = ~f_get_cin.value(cellin);
-// 		freq = {ExpRand(180.0, 400.0)} ! 2;
-// 		sig = SinOsc.ar();
-// 		// sig = synthfunc.value();
-// 		fargs = thisFunction.def.varArgs;//makeEnvirFromArgs;
-// 		["fargs", fargs].postln;
-// 		myf = synthfunc.def.sourceCode.asCompileString.compile;//.value(fargs);
-// 		myf.value(1);
-// 		LocalOut.ar(sig);
-// 		Out.kr(cellout, (Pitch.kr(sig)/SampleRate.ir/2) - 1);
-// 		Out.ar(out, sig);
-// 	}).send(s);
-// };
-//
-// // ~makeSynthDefWrapper.def.sourceCode.asCompileString.compile
-//
-// ~makeSynthDefWrapper.value(\blu, {
-// 	arg ... args;
-// 	["args", args].postln;
-// 	// cin.postcs
-// 	// sig = SinOsc.ar(freq) ! 2;
-// });
-//
-// (
-// var myf;
-// ~f1 = {
-// 	|f3 = nil|
-// 	var bla, f2;
-// 	bla = 10.rand;
-// 	f2 = {
-// 		["hello", bla].postln;
-// 	};
-// 	f2.value;
-// 	// thisFunction.valueEnvir.postln;
-// 	f3.value(bla, thisFunctionDef.makeEnvirFromArgs);
-// };
-// // myf = {["context", bla].postln};
-// ~f1.value(f3: {|bla = nil ... args| ["context", bla].postln; ["args", args].postln; nil})
-// // {["context", bla].postln}.perform
-// // ~f1.perform(\myf);
-// )
-//
-// "".perform(\a)
-//
-// x = Synth(\blu);
+// synthdef wrapper
+~makeSynthDefWrapper = {
+	|name = \bla, synthfunc = nil|
+	SynthDef(name, {
+		|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0, gate = 1|
+		var cin, freq, fret, sout, cout;
+		var fargs, myf;
+		var menv;
+		cin = ~f_get_cin.value(cellin);
+		freq = {ExpRand(180.0, 400.0)} ! 2;
+		sout = SinOsc.ar(100);
+		// sig = synthfunc.value();
+		// fargs = thisFunction.def.varArgs;//makeEnvirFromArgs;
+		// ["fargs", fargs].postln;
+		// myf = synthfunc.def.sourceCode.asCompileString.compile;//.value(fargs);
+		// myf.value(1);
+		fret = synthfunc.value(in: in, out: out, amp: amp, cellin: cellin, cellout: cellout, cin: cin, freq: freq);
+		sout = fret[0];
+		cout = fret[1];
+		menv = EnvGen.kr(
+			envelope: Env.asr(attackTime: 0.1, sustainLevel: 1.0, releaseTime: 1.0, curve: -4),
+			gate: gate, doneAction: 2);
+		LocalOut.ar(sout);
+		Out.kr(cellout, cout);
+		Out.ar(out, sout * menv);
+	});
+};
+
+~makeSynthDefWrapper.value(\blu, {
+	// arg ... args;
+	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0, cin = 0, freq = 0|
+	var sout, cout;
+	sout = SinOsc.ar(ExpRand(lo: 60, hi: 1000));
+	cout = (Pitch.kr(sout)/SampleRate.ir/2) - 1;
+	[sout, cout]
+}).send;
 
 // reference generator defs
 SynthDef(\fm1, {

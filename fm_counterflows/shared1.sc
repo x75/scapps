@@ -64,9 +64,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 	});
 });
 
-// ~bus2osctask.play;
-// OSCdef.all.size;
-// OSCdef.freeAll;
+// OSCdef.all.size; // OSCdef.freeAll;
 
 // init remote control bus from osc
 ~oscnameremote.keys.do({|name, i|
@@ -83,15 +81,15 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 )
 
 // application specific code -> your turn
-
 // test scenario, create generators synths
 (
 ~nodeids = [];
 ~abusses.do({|b, i|
+	var synthdef = ~synthdefs.choose;
 	// Synth(\fm1, [\in, 0, \out, b, \amp, 1.0, \cellin, ~cbusses.wrapAt(i-1), \cellout, ~cbusses[i]]);
 	~nodeids = ~nodeids.add(s.nextNodeID);
-	["nodeid", ~nodeids[i]].postln;
-	s.sendMsg("/s_new", ~synthdefs.choose, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 1.0,
+	["nodeid", ~nodeids[i], "synthdef", synthdef].postln;
+	s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 1.0,
 	"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
 	// local only hack
 	// "cellin", ~cbusses.wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
@@ -102,7 +100,8 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 
 (
 ~nodeids.do({|id, i|
-	s.sendMsg("/n_free", id);
+	// s.sendMsg("/n_free", id);
+	s.sendMsg("/n_set", id, \gate, 0);
 });
 ~bus2osctask.stop;
 )
