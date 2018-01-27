@@ -110,6 +110,22 @@ SynthDef(\chaosfb6, {
 }).send(s);
 
 
+~makeSynthDefWrapper.value(\chaosfb8, {
+	|in = 0, out = 0, amp = 1.0, cellin = 0, cellout = 0, cin = 0, freq = 0|
+	var sout, cout;
+	var lfamp;
+	amp = 1.0;// - ExpRand(lo: 0.2, hi: 0.8);
+	lfamp = ~f_lf_ens_2.value;
+	sout = SinOscFB.ar(
+		freq: Pitch.kr(LocalIn.ar(2)),
+		feedback: LocalIn.ar(2).reverse * LFNoise2.kr(0.5, 4pi),
+		mul: amp * lfamp); // cin.abs
+	LocalOut.ar(sout);
+	// Out.kr(cellout, (Pitch.kr(sout)/SampleRate.ir/2) - 1);
+	cout = ~f_cout_pitch_raw.value(cellout, sout);
+	[sout, cout]
+}).send(s);
+
 // analysis stuff
 
 SynthDef(\specen, {

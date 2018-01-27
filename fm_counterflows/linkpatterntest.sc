@@ -1,5 +1,6 @@
 
 Link.enable;
+Link.setTempo(90);
 
 this.executeFile("../src/supercollider/scapps/world_synthdefs.sc");
 
@@ -130,8 +131,6 @@ SynthDef(\kickDrum, {
 	);
 	);
 }).add;
-
-
 )
 
 {BrownNoise.kr()}.freqscope
@@ -143,19 +142,21 @@ SynthDef(\kickDrum, {
 });
 )
 
-x = Synth(\hihat, [\amp, 1.0]);
+x = Synth(\hihat, [\amp, 0.6]);
 x = Synth(\hihat, [\amp, 0.4]);
 x = Synth(\hihat, [\amp, 0.1]);
 x = Synth(\hihat, [\amp, 0.3, \div, 8.0]);
 
-y = Synth(\snare, [\amp, 0.8, \div, 1.0]);
+y = Synth(\snare, [\amp, 0.4, \div, 1.0]);
+y.free
 y = Synth(\snare, [\amp, 0.6, \div, 0.5]);
-y = Synth(\snare909ish, [\amp, 2.2, \div, 1.0, \envdur, 0.35]);
-
-
-z = Synth(\kik, [\amp, 4.0, \div, 2.0, \p1, 320, \dur, 0.05, \envdur, 0.05]);
-z = Synth(\kik, [\amp, 2.0, \div, 0.125, \p1, 240, \dur, 2.0, \envdur, 2.0]);
-
+y = Synth(\snare909ish, [\amp, 2.2, \div, 0.5, \envdur, 0.46]);
+y.free
+y = Synth(\snare909ish, [\amp, 0.05, \div, 8.0, \envdur, 0.46]);
+z.free
+a = Synth(\kik, [\amp, 4.0, \div, 1.0, \p1, 220, \dur, 0.03, \envdur, 0.03]);
+z = Synth(\kik, [\amp, 2.0, \div, 0.062, \p1, 240, \p2, 42, \dur, 2.0, \envdur, 2.0]);
+a.free
 
 Array.series(10, 0)
 Array.geom(4, 1, 2).reverse.normalizeSum

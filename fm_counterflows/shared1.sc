@@ -9,14 +9,22 @@ this.executeFile(~counterpath +/+ "shared_local.sc");
 
 (
 // basic init for server and network
+s.options.blockSize = 32;
+[\blocksize, s.options.blockSize].postln;
 s.boot;
 thisProcess.openUDPPort(1138); // open another custom listening port
 thisProcess.openPorts;
 
 // network setup / osc foo
 NetAddr.broadcastFlag = true;
-~oscbroadcast = NetAddr("192.168.0.255", 1138);
+//~oscbroadcast = NetAddr("192.168.2.255", 1138);
+~oscbroadcast = [
+	NetAddr("192.168.2.16", 1138),
+	NetAddr("192.168.2.1", 1138),
+];
 )
+
+Link.enable;
 
 (
 //////////////////////////////
@@ -58,7 +66,10 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 ~bus2osctask = Task({
 	inf.do({|i|
 		~cbussesr[~oscnamelocals].do({|b, j|
-			~oscbroadcast.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
+			// ~oscbroadcast.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
+			~oscbroadcast.do({|peer|
+				peer.sendMsg("/" ++ ~oscnamelocal ++ "/c" ++ j, b.getSynchronous);
+			});
 		});
 		0.1.wait;
 	});
@@ -70,7 +81,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 ~oscnameremote.keys.do({|name, i|
 	(~oscnameremote[name]).do({|j|
 		OSCdef((name ++ "cr" ++ j).asSymbol, {|msg, time, addr, recvPort|
-			//msg.postln;
+			// msg.postln;
 			// linear assignment
 			~cbussesr[name][j].value = msg[1];
 			// random assignment
@@ -90,17 +101,21 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 	~nodeids = ~nodeids.add(s.nextNodeID);
 	["nodeid", ~nodeids[i], "synthdef", synthdef].postln;
 	s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 1.0,
-	"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
+		"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
+		"cellout", ~cbussesr[~oscnamelocals][i].index, \div, 2/(2**rand(4)), \envdur, 0.02.exprand(2.0));
 	// local only hack
 	// "cellin", ~cbusses.wrapAt(~numcbus.rand).index, "cellout", ~cbusses[i].index);
 });
 
+
 ~bus2osctask.start;
 )
 
+// test sending creation args that don't exist in synth
+
 (
 ~nodeids.do({|id, i|
-	// s.sendMsg("/n_free", id);
+	s.sendMsg("/n_free", id);
 	s.sendMsg("/n_set", id, \gate, 0);
 });
 ~bus2osctask.stop;
@@ -109,18 +124,25 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 // experiment
 (
 ~eq = Task({
-	var nodeid, cursynth, curainbus;
+	var nodeid, synthdef, curainbus;
 	100.do({|iter|
 		~abusses.do({|b, i|
 			nodeid = ~nodeids[i];
-			cursynth = ~synthdefs.choose;
+			synthdef = ~synthdefs.choose;
 			curainbus = i + 1; //~abusses.choose.index;
-			["new", nodeid, cursynth, curainbus].postln;
+			["new", nodeid, synthdef, curainbus].postln;
+			s.sendMsg("/n_set", nodeid, \gate, 0);
+			2.0.wait;
 			s.sendMsg("/n_free", nodeid);
 			0.1.wait;
-			s.sendMsg("/s_new", cursynth, nodeid, 0, 1, "in", curainbus, "out", b.index, "amp", 1.0,
-			"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index, "cellout", ~cbussesr[~oscnamelocals][i].index);
-			1.0.exprand(10.0).wait;
+			// s.sendMsg("/s_new", synthdef, nodeid, 0, 1, "in", curainbus, "out", b.index,
+			// 	"amp", 1.0, "cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
+			// "cellout", ~cbussesr[~oscnamelocals][i].index);
+			s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index,
+				"amp", 1.0, "cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
+				"cellout", ~cbussesr[~oscnamelocals][i].index);//,
+//				"div", 2/(2**rand(4)), "envdur", 0.02.exprand(2.0));
+			5.0.exprand(20.0).wait;
 		});
 	});
 });

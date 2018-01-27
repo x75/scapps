@@ -46,6 +46,29 @@
 	cin
 };
 
+~f_lf_ens_1 = {
+	var lfs = [];
+	10.do({
+		lfs = lfs.add(SinOsc.kr(ExpRand(lo: 0.033, hi: 0.3), mul: 3.0).abs.clip(0, 1));
+	});
+	lfs.product;
+};
+
+// make it sparser, hard lfo pulses
+~f_lf_ens_2 = {
+	var lfs = [];
+	10.do({
+		var freq = TExpRand.kr(lo: 0.05, hi: 1.0, trig: Impulse.kr(0));
+		var duty = 0.9 - (freq * 0.5);
+		// lfs = lfs.add(SinOsc.kr(ExpRand(lo: 0.033, hi: 0.3), mul: 3.0).clip(-1, 1));
+		lfs = lfs.add(Lag3.kr(LFPulse.kr(freq,
+			width: 0.1, //duty,
+			mul: 1.0).clip(0, 1)), 0.2);
+	});
+	lfs.sum;
+};
+
+
 // synthdef wrapper
 ~makeSynthDefWrapper = {
 	|name = \bla, synthfunc = nil|
