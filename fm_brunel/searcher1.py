@@ -24,8 +24,8 @@ from pythonosc import udp_client
 import numpy as np
 
 map1 = {
-    10: 'mes_amp',
-    11: 'mes_se',
+    10: 'amp',
+    11: 'se',
 }
 
 def print_volume_handler(unused_addr, args, volume):
@@ -41,17 +41,17 @@ class Searcher(threading.Thread):
         threading.Thread.__init__(self)
         self.isrunning = True
         self.cnt_main = 0
-        self.loop_time = 1.0
+        self.loop_time = 0.1
         
         self.bufsize = 100
 
         self.freq = 440
-        self.freq_ = np.zeros((10, 1))
+        self.freq_ = np.ones((self.bufsize, 1)) * self.freq
         self.freq_[0,0] = self.freq
         self.coef = {'amp': 0.9, 'se': 0.9}
         self.avg = {'amp': 0, 'se': 0}
         self.max = {'amp': 0, 'se': 0}
-        self.mes_ = {'amp': np.zeros((10, 1)), 'se': np.zeros((10, 1))}
+        self.mes_ = {'amp': np.zeros((self.bufsize, 1)), 'se': np.zeros((self.bufsize, 1))}
         self.max_leak = {'amp': 0, 'se': 0}
 
         self.cnt = 0
@@ -65,24 +65,35 @@ class Searcher(threading.Thread):
         self.client.send_message("/gen", [1, 'active', 1.0])
         self.client.send_message("/mes", [1, 'active', 1.0])
         self.client.send_message("/mes", [2, 'active', 1.0])
+        self.client.send_message("/trig_sync", [1])
 
     def run(self):
         while self.isrunning:
             # print('%s run' % self.__class__.__name__)
             obj = 'amp'
             # obj = 'se'
+            
             if self.mes_[obj][0,0] > self.avg[obj]:
                 print('better: freq = %s' % ( self.freq_[0,0]))
 
-                self.freq = self.freq_[0,0]
-                self.freq_ = np.roll(self.freq_, 1, axis=0)
-                self.freq_[0,0] = self.freq + np.random.normal(0, 10.0)
-                self.client.send_message("/gen", [1, "freq", self.freq_[0,0]])
-
-            if self.cnt % 30 == 0:
+                # update model
+                # self.freq = self.freq_[1,0]
+                self.freq = np.mean(self.freq_[1:3,0])
+                # new sample
+                # self.freq_[0,0] = self.freq + np.random.normal(0, 10.0)
+                self.freq_[0,0] = self.freq + np.random.pareto(1.2)
+                self.freq_[0] = self.freq + ((np.random.binomial(1, 0.5) - 0.5) * 2) * np.random.pareto(1.5, self.freq_[0].shape) #  * self.sigma_expl
+            # timeout 10 sec boredom
+            elif self.cnt % 10 == 0:
                 # self.freq_ = np.roll(self.freq_, 1, axis=0)
                 self.freq_[0,0] = self.freq + np.random.normal(0, 10.0)
-                self.client.send_message("/gen", [1, "freq", self.freq_[0,0]])
+            else:
+                self.freq_[0,0] = self.freq_[1,0]
+
+            # new eval
+            self.client.send_message("/gen", [1, "freq", self.freq_[0,0]])
+            # roll data
+            self.freq_ = np.roll(self.freq_, 1, axis=0)
 
             self.cnt += 1
             time.sleep(self.loop_time)
@@ -112,13 +123,13 @@ class Searcher(threading.Thread):
         # print('args = %s, %s' % (tid, tval))
         # print('kwargs = %s' % (kwargs))
 
-        if map1[tid] == 'mes_amp':
+        if map1[tid] == 'amp':
             self.mes_['amp'] = np.roll(self.mes_['amp'], 1, axis=0)
             self.mes_['amp'][0,0] = tval
             self.avg['amp'] = self.coef['amp'] * self.avg['amp'] + (1 - self.coef['amp']) * tval
             print('handlers_mes: tid = %s, tval = %s, tavg = %s' % (map1[tid], tval, self.avg['amp']))
 
-        elif map1[tid] == 'mes_se':
+        elif map1[tid] == 'se':
             self.mes_['se'] = np.roll(self.mes_['se'], -1, axis=0)
             self.mes_['se'][0,0] = tval
             self.avg['se'] = self.coef['se'] * self.avg['se'] + (1 - self.coef['se']) * tval
