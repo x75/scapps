@@ -1,2 +1,3 @@
 # scapps
-supercollider scripts and applications
+
+sound tools and project scripts, supercollider, python, pd, wild mix.
