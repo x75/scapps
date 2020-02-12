@@ -3,7 +3,7 @@
 // load configuration from shared_local.sc first
 // copy shared_template.sc to shared_local.sc and adjust your settings
 
-~counterpath=("../src/supercollider/scapps/fm_counterflows/");
+~counterpath=("/home/src/supercollider/scapps/fm_2017_counterflows/");
 this.executeFile(~counterpath +/+ "shared_local.sc");
 )
 
@@ -19,8 +19,8 @@ thisProcess.openPorts;
 NetAddr.broadcastFlag = true;
 //~oscbroadcast = NetAddr("192.168.2.255", 1138);
 ~oscbroadcast = [
-	NetAddr("192.168.2.16", 1138),
-	NetAddr("192.168.2.1", 1138),
+	NetAddr("192.168.188.21", 1138),
+	// NetAddr("192.168.2.1", 1138),
 ];
 )
 
@@ -100,7 +100,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 	// Synth(\fm1, [\in, 0, \out, b, \amp, 1.0, \cellin, ~cbusses.wrapAt(i-1), \cellout, ~cbusses[i]]);
 	~nodeids = ~nodeids.add(s.nextNodeID);
 	["nodeid", ~nodeids[i], "synthdef", synthdef].postln;
-	s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 1.0,
+	s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index, "amp", 0.1,
 		"cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
 		"cellout", ~cbussesr[~oscnamelocals][i].index, \div, 2/(2**rand(4)), \envdur, 0.02.exprand(2.0));
 	// local only hack
@@ -111,7 +111,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 ~bus2osctask.start;
 )
 
-// test sending creation args that don't exist in synth
+// test sending creation args that don't exist in· synth
 
 (
 ~nodeids.do({|id, i|
@@ -129,7 +129,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 		~abusses.do({|b, i|
 			nodeid = ~nodeids[i];
 			synthdef = ~synthdefs.choose;
-			curainbus = i + 1; //~abusses.choose.index;
+		·	curainbus = i + 1; //~abusses.choose.index;
 			["new", nodeid, synthdef, curainbus].postln;
 			s.sendMsg("/n_set", nodeid, \gate, 0);
 			2.0.wait;
@@ -139,7 +139,7 @@ this.executeFile(~counterpath +/+ "fmsynthdefs_" ++ ~oscnamelocal ++ ".sc");
 			// 	"amp", 1.0, "cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
 			// "cellout", ~cbussesr[~oscnamelocals][i].index);
 			s.sendMsg("/s_new", synthdef, ~nodeids[i], 0, 1, "in", ~abusses.choose.index, "out", b.index,
-				"amp", 1.0, "cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
+				"amp", 0.1, "cellin", ~cbussesr[~cbussesr.keys.choose].wrapAt(~numcbus.rand).index,
 				"cellout", ~cbussesr[~oscnamelocals][i].index);//,
 //				"div", 2/(2**rand(4)), "envdur", 0.02.exprand(2.0));
 			5.0.exprand(20.0).wait;
@@ -209,4 +209,8 @@ b.scope
 
 
 ~testarray = {|i| i} ! 10;
-~
+Server
+
+s.prepareForRecord;
+s.record;
+s.stopRecording;

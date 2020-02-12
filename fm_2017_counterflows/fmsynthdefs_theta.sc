@@ -149,7 +149,7 @@ SynthDef(\specen, {
 	// LFNoise2.kr(0.5, 4pi)
 	entf = Lag.kr(entropy, lagTime: ExpRand(1.0, 10.0));// * LFNoise2.kr(freq: 0.1, mul: 1.0);
 	// [220.0, 360.0]
-	sig = SinOsc.ar(freq: [ExpRand(40.0, 100.0), ExpRand(40.0, 100.0)] * entf * 1.0,               phase: LocalIn.ar(2).reverse * entf * 1.0, mul: 0.3);
+	sig = SinOsc.ar(freq: [ExpRand(40.0, 100.0), ExpRand(40.0, 100.0)] * entf * 1.0,               phase: LocalIn.ar(2).reverse * entf * 1.0, mul: 0.03);
 	// sig = SMS.ar(ein, 80, MouseY.kr(1,50), 8, 0.3);
 	// + WhiteNoise.kr(mul: 0.05)
 	// entropy.poll;
