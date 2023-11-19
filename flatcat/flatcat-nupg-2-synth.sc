@@ -11,81 +11,6 @@
 
 ~data.data_pulsaret[0]
 
-(
-~buf1 = Buffer.alloc(s, 4096, 1);
-)
-
-(
-SynthDef(\flatcatRecordbuf, { arg out = 0, bufnum = 0;
-	var input = AudioIn.ar(1);
-    RecordBuf.ar(input, bufnum, doneAction: Done.freeSelf, loop: 0);
-}).play(s,[\out, 0, \bufnum, ~buf1]);
-)
-
-(
-//~buf1.plot;
-// ~buf1.getToFloatArray(wait:0.01,action:{arg array; a = array; { a.plot }.defer; "done".postln });
-~buf1.getToFloatArray(wait:0.01,action:{arg array;
-	a = array;
-	{ a.plot }.defer;
-	"done".postln;
-	~buf1array = a.asArray.resamp1(2048).copy;
-	// file.openRead(path);
-	// temp = FloatArray.newClear(4096);
-	// file.readData(temp);
-	// array = temp.asArray.resamp1(2048).copy;
-	//array = array.linlin(-1.0, 1.0, -1.0, 1.0);
-	~data.data_pulsaret[0].value_(~buf1array);
-	~buffers[0][0].sendCollection(~buf1array);
-});
-)
-
-(
-SynthDef(\flatcatRecordbuf, { arg out = 0, bufnum = 0, gain = 3.0;
-	var input = AudioIn.ar(1) * gain;
-	var inputlim = Limiter.ar(input, level: 1.0, dur: 0.01);
-	RecordBuf.ar(input * 1.0, bufnum, doneAction: Done.freeSelf, loop: 1);
-}).send(s);
-
-~buf1recorder = Synth("flatcatRecordbuf", [out: 0, bufnum: ~buf1]);
-)
-
-~buf1recorder.set(\gain, 2.0);
-
-(
-~buf1frominput = Task({
-	inf.do({|i|
-
-		//~buf1.plot;
-		// ~buf1.getToFloatArray(wait:0.01,action:{arg array; a = array; { a.plot }.defer; "done".postln });
-		~buf1.getToFloatArray(wait:0.01,action:{arg array;
-			a = array;
-			//{ a.plot }.defer;
-			~buf1array = a.asArray.resamp1(2048).copy;
-			// file.openRead(path);
-			// temp = FloatArray.newClear(4096);
-			// file.readData(temp);
-			// array = temp.asArray.resamp1(2048).copy;
-			//array = array.linlin(-1.0, 1.0, -1.0, 1.0);
-			~bufidx = rrand(0, 2).asInteger;
-			~data.data_pulsaret[~bufidx].value_(~buf1array);
-			~buffers[~bufidx][0].sendCollection(~buf1array);
-			["loaded buf to", ~bufidx].postln;
-		});
-		// 2.0.linrand.wait;
-		exprand(0.1, 4.0).wait;
-	});
-});
-)
-
-(
-~buf1frominput.play;
-)
-
-(
-~buf1frominput.stop;
-~buf1recorder.free;
-)
 
 //n = NetAddr("127.0.0.1", 57120); // local machine
 
@@ -269,6 +194,38 @@ NuPG_Ndefs.trains[2].stop;
 
 ~loadOSCproximity.value();
 )
+
+(
+// flatcat2nupg
+~loadOSCflatcat2nupg = {
+	OSCdef(\flatcat2nupg, {|msg, time, addr, recvPort|
+		msg.postln;
+		~data.data_main.size.do({|row|
+			// row.postln;
+			~data.data_main[row].size.do({|col|
+				// [row, col].postln;
+				// msg.size.postln;
+				// ((row * 5) + col + 1).postln;
+				// msg[((row * 5) + col + 1)].postln;
+				// msg[].postln;
+				// ~data.data_main[row][col].input = ~flatcat_y.get(row * ~flatcat_M.cols + col, 0);
+				~flatcat_xdata.put(row, col, msg[(row * 5) + col + 1]);
+			});
+		});
+		// ~flatcat_cnt = ~flatcat_cnt + 1;
+	}, '/flatcat2nupg', nil); // def style
+};
+
+~unloadOSCflatcat2nupg = {
+	OSCdef(\flatcat).free;
+};
+
+~loadOSCflatcat2nupg.value();
+)
+
+~unloadOSCflatcat2nupg.value;
+
+
 
 (
 // flatcat

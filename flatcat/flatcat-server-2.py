@@ -60,7 +60,7 @@ fv_max_emp = np.array(
 fvs = []
 loop_cnt = 0
 
-alpha = 0.995
+alpha = 0.9
 beta = 1 - alpha
 
 def make_random_transfer_func():
@@ -101,15 +101,19 @@ def normalize_min_max(fv):
     print(f"fv {fv}")
     return fv
 
-def normalize_mean_var(fv):
-    global fv_mean, fv_var
-    fv_mean = (alpha * fv_mean) + (beta * fv)
-    fv_var = (alpha * fv_var) + (beta * np.square(fv_mean - fv))
+def normalize_mean_var(fv, fv_mean, fv_var):
+    # global fv_mean, fv_var
+    # fv_mean = (alpha * fv_mean) + (beta * fv)
+    # fv_var = (alpha * fv_var) + (beta * np.square(fv_mean - fv))
 
+    print(f"fv_mean {fv_mean}")
+    print(f"fv_var {fv_var}")
+    
     # fv_mean = fv_mean_
     # fv_var = fv_var_
     
-    fv = (fv - fv_mean) / fv_var
+    fv = (fv - fv_mean) / (fv_var * 5)
+    print(f"fv {fv}")    
     return fv
 
 def normalize_heuristic(fv):
@@ -197,14 +201,14 @@ class oscserv(object):
         print(f"{address}: {fv.shape} {fv}")
         # a = np.random.uniform(0, 1, (12,))
 
-        # # input stats
-        # self.fv_mean = (alpha * self.fv_mean) + (beta * fv)
-        # self.fv_var = (alpha * self.fv_var) + (beta * np.square(self.fv_mean - fv))
+        # input stats
+        self.fv_mean = (alpha * self.fv_mean) + (beta * fv)
+        self.fv_var = (alpha * self.fv_var) + (beta * np.sqrt(np.square(self.fv_mean - fv)))
         
         # fvs.append(fv.tolist())
         
         # fv = normalize_min_max(fv)
-        # fv = normalize_mean_var(fv)
+        # fv = normalize_mean_var(fv, self.fv_mean, self.fv_var)
         fv = normalize_heuristic(fv)
         # print(f"fv {fv}")
         
@@ -216,16 +220,18 @@ class oscserv(object):
         # # map onto range [0, 2]
         # fv = np.tanh(fv) + 1
 
+        # squelch
+        fv = np.tanh(fv)
+        
         # apply array of random transfer functions to each element
-        fv = np.tanh(fv) 
         fv_ = []
         for i, _ in enumerate(fv):
             __ = self.transfers[i](_) + 1
             fv_.append(__)
         fv = np.array(fv_)
             
-        self.fv_mean = (alpha * self.fv_mean) + (beta * fv)
-        self.fv_var = (alpha * self.fv_var) + (beta * np.square(self.fv_mean - fv))
+        # self.fv_mean = (alpha * self.fv_mean) + (beta * fv)
+        # self.fv_var = (alpha * self.fv_var) + (beta * np.square(self.fv_mean - fv))
         
         # specific amplitude map
         
